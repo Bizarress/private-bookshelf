@@ -253,7 +253,6 @@ body {
 /* Book Item Styles */
 .book-item {
     position: relative;
-    transition: all 0.3s ease;
     cursor: pointer;
 }
 
@@ -444,23 +443,36 @@ body {
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
+    padding: 2rem; /* Adjusted padding to be consistent */
 }
 
 .modal-close {
-    position: absolute;
-    top: 15px;
-    right: 20px;
     background: none;
     border: none;
     font-size: 2rem;
     cursor: pointer;
     color: #666;
-    z-index: 10;
+    padding: 0;
+    line-height: 1;
 }
 
 .modal-body {
-    padding: 2rem;
-    padding-top: 3rem;
+    padding-top: 2rem;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.modal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
 /* Pagination */
@@ -732,8 +744,12 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
-    padding-bottom: 1rem;
+    padding: 0 2rem 1rem 2rem; /* Add horizontal padding */
     border-bottom: 2px solid var(--border-color);
+}
+
+#bookshelves-list {
+    padding: 0 2rem; /* Add horizontal padding */
 }
 
 .bookshelf-item {
@@ -1496,4 +1512,116 @@ body {
     font-size: 0.8rem;
     color: #888;
     font-weight: bold;
+}
+
+/* Bulk Edit Styles */
+.bulk-edit-controls {
+    margin-bottom: 1rem;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.bulk-edit-panel {
+    display: none; /* Default to hidden */
+    gap: 1rem;
+    align-items: center;
+    margin-top: 1rem; /* Space from the bulk edit start button */
+    justify-content: flex-end;
+}
+
+.bulk-edit-panel.show {
+    display: flex; /* Show when 'show' class is present */
+}
+
+.selection-info {
+    font-weight: bold;
+    color: var(--text-color); /* Black text */
+}
+
+.bulk-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.book-item.selection-mode {
+    cursor: pointer;
+}
+
+.book-item.selection-mode .book-cover {
+    opacity: 0.7;
+}
+
+.book-item.selected {
+    outline: 4px solid var(--accent-color);
+    outline-offset: 4px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.6); /* Add a glow effect */
+}
+
+.book-item.selected .book-cover {
+    opacity: 1;
+}
+
+.book-item .selection-checkbox {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 24px;
+    height: 24px;
+    z-index: 10;
+    accent-color: var(--secondary-color);
+    display: none;
+}
+
+.bookshelf.selection-mode .book-item .selection-checkbox {
+    display: block;
+}
+
+.bulk-edit-controls .btn-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+    border: 1px solid var(--secondary-color);
+}
+
+.bulk-edit-controls .btn-secondary:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.bulk-edit-panel .btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.bulk-edit-panel .btn-primary {
+    background-color: #28a745; /* Green for add */
+    border-color: #28a745;
+}
+
+.bulk-edit-panel .btn-primary:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.bulk-edit-panel .btn-danger {
+    background-color: #dc3545; /* Red for remove */
+    border-color: #dc3545;
+}
+
+.bulk-edit-panel .btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+.bulk-edit-panel .btn-secondary {
+    background-color: #6c757d; /* Gray for cancel */
+    border-color: #6c757d;
+}
+
+.bulk-edit-panel .btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
 }

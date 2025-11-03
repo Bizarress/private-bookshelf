@@ -24,6 +24,8 @@ class VirtualBookshelf {
         this.booksPerPage = 50;
         this.sortOrder = 'custom';
         this.sortDirection = 'desc';
+        this.isBulkEditMode = false;
+        this.selectedBooks = new Set();
         
         this.init();
     }
@@ -293,6 +295,19 @@ class VirtualBookshelf {
         document.getElementById('clear-library').addEventListener('click', () => {
             this.clearLibrary();
         });
+
+        // Modal background click to close
+        document.getElementById('book-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                this.closeModal();
+            }
+        });
+
+        // Bulk edit listeners
+        document.getElementById('bulk-edit-start').addEventListener('click', () => this.startBulkEdit());
+        document.getElementById('bulk-edit-cancel').addEventListener('click', () => this.cancelBulkEdit());
+        document.getElementById('bulk-add-to-bookshelf').addEventListener('click', () => this.bulkAddToBookshelf());
+        document.getElementById('bulk-remove-from-bookshelf').addEventListener('click', () => this.bulkRemoveFromBookshelf());
     }
 
     setView(view) {
@@ -463,7 +478,122 @@ class VirtualBookshelf {
         this.renderStandardView(bookshelf);
         
         this.setupPagination();
+        this.updateBulkEditControls();
     }
+
+    updateBulkEditControls() {
+        const bulkEditControls = document.getElementById('bulk-edit-controls');
+        if (!bulkEditControls) {
+            return;
+        }
+        const bulkEditPanel = document.getElementById('bulk-edit-panel');
+        const removeButton = document.getElementById('bulk-remove-from-bookshelf');
+        const currentBookshelfId = document.getElementById('bookshelf-selector').value;
+
+        if (this.filteredBooks.length > 0) {
+            bulkEditControls.style.display = 'block';
+        } else {
+            bulkEditControls.style.display = 'none';
+        }
+
+                if (this.isBulkEditMode) {
+            bulkEditPanel.classList.add('show');
+            // 「すべての本」ビューでは削除ボタンを無効化
+            if (currentBookshelfId === 'all') {
+                removeButton.style.display = 'none';
+            } else {
+                removeButton.style.display = 'inline-block';
+            }
+        } else {
+            bulkEditPanel.classList.remove('show');
+        }
+    }
+
+    startBulkEdit() {
+        this.isBulkEditMode = true;
+        this.selectedBooks.clear();
+        document.getElementById('bookshelf').classList.add('selection-mode');
+        this.updateBulkEditControls();
+    }
+
+    cancelBulkEdit() {
+        this.isBulkEditMode = false;
+        this.selectedBooks.clear();
+        document.getElementById('bookshelf').classList.remove('selection-mode');
+        this.updateBulkEditControls();
+    }
+
+    toggleBookSelection(asin) {
+        const bookElement = document.querySelector(`.book-item[data-asin="${asin}"]`);
+        const checkbox = bookElement.querySelector('.selection-checkbox');
+
+        if (this.selectedBooks.has(asin)) {
+            this.selectedBooks.delete(asin);
+        } else {
+            this.selectedBooks.add(asin);
+        }
+        bookElement.classList.toggle('selected', this.selectedBooks.has(asin));
+        
+        if (checkbox) {
+            checkbox.checked = this.selectedBooks.has(asin);
+        }
+        
+        document.getElementById('bulk-selected-count').textContent = this.selectedBooks.size;
+        this.updateBulkEditControls();
+    }
+
+    bulkAddToBookshelf() {
+        if (this.selectedBooks.size === 0) {
+            alert('本が選択されていません。');
+            return;
+        }
+
+        // 本棚選択のUIを簡易的にpromptで実装
+        const bookshelfOptions = this.userData.bookshelves.map((bs, index) => `${index + 1}: ${bs.name}`).join('\n');
+        const choice = prompt(`追加する本棚の番号を入力してください:\n${bookshelfOptions}`);
+        
+        if (choice !== null) {
+            const bookshelfIndex = parseInt(choice) - 1;
+            if (bookshelfIndex >= 0 && bookshelfIndex < this.userData.bookshelves.length) {
+                const targetBookshelf = this.userData.bookshelves[bookshelfIndex];
+                let addedCount = 0;
+                this.selectedBooks.forEach(asin => {
+                    if (!targetBookshelf.books.includes(asin)) {
+                        targetBookshelf.books.push(asin);
+                        addedCount++;
+                    }
+                });
+                this.saveUserData();
+                alert(`${addedCount}冊の本を「${targetBookshelf.name}」に追加しました。`);
+                this.cancelBulkEdit();
+            } else {
+                alert('無効な番号です。');
+            }
+        }
+    }
+
+    bulkRemoveFromBookshelf() {
+        if (this.selectedBooks.size === 0) {
+            alert('本が選択されていません。');
+            return;
+        }
+
+        const currentBookshelfId = document.getElementById('bookshelf-selector').value;
+        if (currentBookshelfId === 'all') {
+            alert('「すべての本」ビューからは削除できません。');
+            return;
+        }
+
+        const targetBookshelf = this.userData.bookshelves.find(bs => bs.id === currentBookshelfId);
+        if (targetBookshelf && confirm(`${this.selectedBooks.size}冊の本を「${targetBookshelf.name}」から削除しますか？`)) {
+            targetBookshelf.books = targetBookshelf.books.filter(asin => !this.selectedBooks.has(asin));
+            this.saveUserData();
+            alert(`${this.selectedBooks.size}冊の本を削除しました。`);
+            this.cancelBulkEdit();
+            this.applyFilters(); // Refresh the view
+        }
+    }
+
 
 
 
@@ -510,13 +640,14 @@ class VirtualBookshelf {
         bookElement.dataset.asin = book.asin;
         
         // Add drag-and-drop attributes
-        bookElement.draggable = true;
+        bookElement.draggable = !this.isBulkEditMode; // Disable drag in bulk edit mode
         bookElement.setAttribute('data-book-asin', book.asin);
         
         const userNote = this.userData.notes[book.asin];
         
+        let innerHTML = '';
         if (displayType === 'cover' || displayType === 'covers') {
-            bookElement.innerHTML = `
+            innerHTML = `
                 <div class="book-cover-container">
                     <div class="drag-handle">⋮⋮</div>
                     ${book.productImage ? 
@@ -533,7 +664,7 @@ class VirtualBookshelf {
                 </div>
             `;
         } else {
-            bookElement.innerHTML = `
+            innerHTML = `
                 <div class="book-cover-container">
                     <div class="drag-handle">⋮⋮</div>
                     ${book.productImage ? 
@@ -550,21 +681,30 @@ class VirtualBookshelf {
                 </div>
             `;
         }
-        
-        // Add drag event listeners
-        bookElement.addEventListener('dragstart', (e) => this.handleDragStart(e));
-        bookElement.addEventListener('dragover', (e) => this.handleDragOver(e));
-        bookElement.addEventListener('drop', (e) => this.handleDrop(e));
-        bookElement.addEventListener('dragend', (e) => this.handleDragEnd(e));
+
+        bookElement.innerHTML = innerHTML;
+
+        // Add drag event listeners only if not in bulk edit mode
+        if (!this.isBulkEditMode) {
+            bookElement.addEventListener('dragstart', (e) => this.handleDragStart(e));
+            bookElement.addEventListener('dragover', (e) => this.handleDragOver(e));
+            bookElement.addEventListener('drop', (e) => this.handleDrop(e));
+            bookElement.addEventListener('dragend', (e) => this.handleDragEnd(e));
+        }
         
         bookElement.addEventListener('click', (e) => {
-            // Prevent click when dragging or clicking drag handle
-            if (e.target.closest('.drag-handle') || bookElement.classList.contains('dragging')) {
+            if (this.isBulkEditMode) {
                 e.preventDefault();
-                e.stopPropagation();
-                return;
+                this.toggleBookSelection(book.asin);
+            } else {
+                // Prevent click when dragging or clicking drag handle
+                if (e.target.closest('.drag-handle') || bookElement.classList.contains('dragging')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                this.showBookDetail(book);
             }
-            this.showBookDetail(book);
         });
         
         return bookElement;
@@ -578,7 +718,6 @@ class VirtualBookshelf {
         bookItem.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', this.draggedASIN);
-        console.log('🎯 Drag started:', this.draggedASIN, bookItem);
     }
 
     handleDragOver(e) {
@@ -1287,6 +1426,7 @@ class VirtualBookshelf {
         
         // Reset the dropdown
         bookshelfSelect.value = '';
+        this.applyFilters();
     }
 
     removeFromBookshelf(asin, bookshelfId) {
@@ -1308,6 +1448,7 @@ class VirtualBookshelf {
             bookshelf.books = bookshelf.books.filter(bookAsin => bookAsin !== asin);
             this.saveUserData();
             this.renderBookshelfList(); // Update the bookshelf management UI if open
+            this.applyFilters();
             
             // If currently viewing this bookshelf, update the display
             if (this.currentBookshelf === bookshelfId) {

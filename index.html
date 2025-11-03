@@ -138,6 +138,20 @@
                 <div class="loading" id="loading">
                     📚 本棚を準備中...
                 </div>
+
+                <div class="bulk-edit-controls" id="bulk-edit-controls" style="display: none;">
+                    <button id="bulk-edit-start" class="btn btn-secondary">一括編集</button>
+                    <div class="bulk-edit-panel" id="bulk-edit-panel">
+                        <div class="selection-info">
+                            <span id="bulk-selected-count">0</span>冊 選択中
+                        </div>
+                        <div class="bulk-actions">
+                            <button id="bulk-add-to-bookshelf" class="btn btn-primary">本棚に追加</button>
+                            <button id="bulk-remove-from-bookshelf" class="btn btn-danger">この本棚から削除</button>
+                        </div>
+                        <button id="bulk-edit-cancel" class="btn btn-secondary">キャンセル</button>
+                    </div>
+                </div>
                 
                 <!-- Bookshelf Overview Section -->
                 <div class="bookshelves-overview" id="bookshelves-overview" style="display: none;">
@@ -179,7 +193,10 @@
     <!-- Book detail modal -->
     <div class="modal" id="book-modal">
         <div class="modal-content">
-            <button class="modal-close" id="modal-close">×</button>
+            <div class="modal-header">
+                <h2 id="modal-title">本の詳細</h2>
+                <button class="modal-close" id="modal-close">×</button>
+            </div>
             <div class="modal-body" id="modal-body">
                 <!-- Book details will be loaded here -->
             </div>
@@ -189,10 +206,12 @@
     <!-- Bookshelf Management Modal -->
     <div id="bookshelf-modal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" id="bookshelf-modal-close">×</button>
             <div class="modal-header">
                 <h2>📚 本棚管理</h2>
-                <button id="add-bookshelf" class="btn btn-primary">+ 新しい本棚</button>
+                <div class="modal-header-actions">
+                    <button id="add-bookshelf" class="btn btn-primary">+ 新しい本棚</button>
+                    <button class="modal-close" id="bookshelf-modal-close">×</button>
+                </div>
             </div>
             <div id="bookshelves-list">
                 <!-- Bookshelves will be inserted here -->
@@ -203,9 +222,9 @@
     <!-- Bookshelf Form Modal -->
     <div id="bookshelf-form-modal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" id="bookshelf-form-modal-close">×</button>
             <div class="modal-header">
                 <h2 id="bookshelf-form-title">📚 新しい本棚</h2>
+                <button class="modal-close" id="bookshelf-form-modal-close">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -232,9 +251,9 @@
     <!-- Kindle Import Modal -->
     <div id="import-modal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" id="import-modal-close">×</button>
             <div class="modal-header">
                 <h2>📥 Kindleデータインポート</h2>
+                <button class="modal-close" id="import-modal-close">×</button>
             </div>
             <div class="modal-body">
                 <div class="import-options">
@@ -270,9 +289,9 @@
     <!-- Manual Book Addition Modal -->
     <div id="add-book-modal" class="modal">
         <div class="modal-content">
-            <button class="modal-close" id="add-book-modal-close">×</button>
             <div class="modal-header">
                 <h2>➕ 手動で本を追加</h2>
+                <button class="modal-close" id="add-book-modal-close">×</button>
             </div>
             <div class="modal-body">
                 <div class="add-book-options">
